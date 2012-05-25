@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="question/type/ccode/db" VERSION="20101101" COMMENT="XMLDB file for Moodle question/type/ccode"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="question_ccode_testcases" COMMENT="A test case is a test to perform on a student's code answer; should output the given output. A test case is regarded as an extension of an 'answer' in Moodle parlance.">
+      <FIELDS>
+        <FIELD NAME="id"         TYPE="int"  NOTNULL="true" UNSIGNED="false" SEQUENCE="true" NEXT="questionid"/>
+        <FIELD NAME="questionid" TYPE="int"  NOTNULL="true" UNSIGNED="false" SEQUENCE="false" COMMENT="Foreign key referencing question to which this test case relates" PREVIOUS="id" NEXT="testcode"/>
+        <FIELD NAME="testcode"   TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Test input code that is appended to the students code before submission" PREVIOUS="questionid" NEXT="stdin"/>
+        <FIELD NAME="stdin"      TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The standard input to the program during the test. Empty for most questions" PREVIOUS="testcode" NEXT="output" />
+        <FIELD NAME="output"     TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The expected output after running the student's code and executing the shell input" PREVIOUS="stdin" NEXT="useasexample"/>
+        <FIELD NAME="useasexample" TYPE="int" LENGTH="1" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="True if this testcase is to be displayed in the spec as an example of how the function works." PREVIOUS="output" NEXT="hidden"/>
+        <FIELD NAME="hidden"     TYPE="int" LENGTH="1" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="True if this testcase is hidden from the students" PREVIOUS="useasexample"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="questionid"/>
+        <KEY NAME="questionid" TYPE="foreign" FIELDS="questionid" REFTABLE="questions" REFFIELDS="id" PREVIOUS="primary"/>
+      </KEYS>
+    </TABLE>
+  </TABLES>
+</XMLDB>

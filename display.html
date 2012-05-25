@@ -1,0 +1,61 @@
+<div class="qtext">
+  <?php
+  	echo $questiontext;
+	if (count($examples) > 0) { ?>
+        <p class="pycode-examples"> <?php
+		foreach ($examples as $example) {
+            $s = htmlspecialchars($example->shellinput) . " &rarr; " . htmlspecialchars($example->output);
+			echo "<br />$s";
+		} ?>
+		</p>
+		<?php
+	}
+  ?>
+  
+</div>
+
+<div class="ablock clearfix">
+ <div class="prompt">
+    <?php echo $answerprompt; ?>
+  </div>
+
+  <table class="answer">
+  <tr>
+      <td> <textarea class="pycode-answer" name="<?php echo $responsefieldname; ?>"
+  			id="<?php echo "edit-".$responsefieldname; ?>" <?php echo $readonly; ?>
+  			cols="80" rows="18" onkeydown="keydown(event, this)"
+  			onkeyup="ignoreNL(event)" onkeypress="ignoreNL(event)"><?php echo s($response); ?></textarea>
+  	  </td>
+  </tr>
+  </table>
+  
+  <div class="pycode-feedback">
+  
+  <?php
+  	if (count($testresults) > 0) {  ?>
+  		<h2>Test Results</h2>
+		<table class="<?php echo $resultsclass; ?>">
+		<tr><th>Test</th>
+		    <th>Your answer</th>
+		</tr>
+		<?php
+		$row = 1;
+		foreach ($testresults as $testresult) {
+			if (!$testresult->hidden) { ?>
+      <tr class="<?php echo 'r'.$row = $row ? 0 : 1; ?>">
+        <td><?php echo htmlspecialchars($testresult->shellinput) . ' &rarr; ' . 
+					htmlspecialchars($testresult->expected); ?></td>
+        <td><?php echo htmlspecialchars($testresult->output); ?></td>
+        <td><?php echo $testresult->feedbackimg; ?></td>
+      </tr>
+    <?php }
+       } ?>
+  </table>
+  <?php
+     echo $feedback;
+    }
+  ?> 
+   </div>
+
+  <?php $this->print_question_submit_buttons($question, $state, $cmoptions, $options); ?>
+</div>
