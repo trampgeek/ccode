@@ -42,7 +42,7 @@
  * @author 	Richard Lobb richard.lobb@canterbury.ac.nz
  */
 
-require_once($CFG->dirroot . '/question/type/progcode/questiontype.php');
+require_once($CFG->dirroot . '/question/type/pycode/progcode/questiontype.php');
 
 /**
  * qtype_ccode extends the base question_type to ccode-specific functionality.
@@ -56,4 +56,7 @@ class qtype_ccode extends qtype_progcode {
     public function name() {
         return 'ccode';
     }
+    
+    // TODO: need to delete all the online-judge data for this question
+    // when the question is deleted.
 }

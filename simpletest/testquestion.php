@@ -120,25 +120,19 @@ class qtype_ccode_question_test extends UnitTestCase {
         $this->assertEqual($result[1], question_state::$gradedright);
         $this->assertTrue(isset($result[2]['_testresults']));
         $testResults = unserialize($result[2]['_testresults']);
-        $n = count($testResults);
-        $i = 0;
         foreach ($testResults as $tr) {
-            $i++;
-            $this->assertEqual($tr->outcome, ONLINEJUDGE_STATUS_ACCEPTED);
-            $this->assertEqual(trim($tr->expected), trim($tr->output));
-            $this->assertEqual($tr->mark, 1.0);
-            $this->assertEqual($tr->hidden, $i == $n ? 1 : 0); // last one hidden
+            $this->assertTrue($tr->isCorrect);
         }
     }
     
     
     public function test_grade_response_compile_errors() {
-        $this->checkBad('int square(int n) { return n * n; }', 'Compile error');
-        $this->checkBad('int sqr(int n) { return n * n }', 'Compile error');
+        $this->checkCompileErrors('int square(int n) { return n * n; }', 'COMPILE ERROR');
+        $this->checkCompileErrors('int sqr(int n) { return n * n }', 'COMPILE ERROR');
     }
         
         
-    private function checkBad($code, $expectedError) {
+    private function checkCompileErrors($code, $expectedError) {
         $q = test_question_maker::make_question('ccode', 'sqr');
         $response = array('answer' => $code);
         $result = $q->grade_response($response);
@@ -149,9 +143,8 @@ class qtype_ccode_question_test extends UnitTestCase {
         $n = count($testResults);
         $this->assertEqual($n, 1);  // Only a single test result should be returned
         $tr = $testResults[0];
-        $this->assertEqual($tr->outcome, ONLINEJUDGE_STATUS_COMPILATION_ERROR);
+        $this->assertFalse($tr->isCorrect);
         $this->assertEqual(substr($tr->output, 0, strlen($expectedError)), $expectedError);
-        $this->assertEqual($tr->mark, 0.0);
     }
        
     
@@ -159,18 +152,25 @@ class qtype_ccode_question_test extends UnitTestCase {
         return "int sqr(int n) { return n * n; }\n";
     }
     
-    /*
+    
     public function test_grade_response_wrong_ans() {
         $q = test_question_maker::make_question('ccode', 'sqr');
-        $code = "def sqr(x): return x * x * x / abs(x)";
+        $code = "int sqr(int x) { return x == 0 ? 1 : 3 * x; }";
         $response = array('answer' => $code);
         $result = $q->grade_response($response);
-        $this->assertEqual($result[0], 0);
+        $this->assertEqual($result[0], 0);  // Should be zero mark
         $this->assertEqual($result[1], question_state::$gradedwrong);
         $this->assertTrue(isset($result[2]['_testresults']));
+        $testResults = unserialize($result[2]['_testresults']);
+        $n = count($testResults);
+        $i = 0;
+        foreach ($testResults as $tr) {
+            $i++;
+            $this->assertEqual($tr->isCorrect, FALSE);
+        }
     } 
   
-    
+    /*
     public function test_grade_syntax_error() {
         $q = test_question_maker::make_question('ccode', 'sqr');
         $code = "def sqr(x): return x  x";

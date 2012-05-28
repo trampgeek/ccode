@@ -25,7 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/question/type/progcode/backup/moodle2/restore_qtype_progcode_plugin.class.php');
+require_once($CFG->dirroot . '/question/type/pycode/progcode/backup/moodle2/restore_qtype_progcode_plugin.class.php');
 
 
 /**

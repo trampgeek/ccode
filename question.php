@@ -32,77 +32,124 @@ defined('MOODLE_INTERNAL') || die();
  * is a separate project -- see http://sourceforge.net/projects/libsandbox/).
  */
 require_once($CFG->dirroot . '/local/onlinejudge/judgelib.php');
-require_once($CFG->dirroot . '/question/type/progcode/question.php');
+require_once($CFG->dirroot . '/question/type/pycode/progcode/question.php');
 
 /**
  * Represents a 'ccode' question.
  */
 class qtype_ccode_question extends qtype_progcode_question {
     
+    const SEPARATOR = '============';
+    
     // Check the correctness of a student's C code given the
     // response and and a set of testCases.
     // Return value is an array of test-result objects.
     // If an error occurs, all further tests are aborted so the returned array may be shorter
-    // than the input array
-    protected function run_tests($code, $testcases) {
-        $nonAbortStatuses = array(
-            ONLINEJUDGE_STATUS_ACCEPTED,
-            ONLINEJUDGE_STATUS_WRONG_ANSWER,
-            ONLINEJUDGE_STATUS_PRESENTATION_ERROR);
-            
-        $cmid = -1;     // AFAIK, the only thing that matters is that this
-                        // number doesn't match the module ID of an active
-                        // on-line assignment module.
-        $userid = 9999; // Seems relevant only to the onlinejudge asst module
-        
+    // than the input array.
+    // To reduce the number of separate compilations where there are
+    // multiple test cases, each with different test code, an attempt is made
+    // to bundle all tests into one run. If this fails with a runtime exception,
+    // the tests are run separately. Otherwise, the results are expanded
+    // into a set of individual pseudo test runs.
+    protected function run_tests($code, $testCases) {      
         $testResults = array();
-        $isAbort = FALSE;
-        foreach ($testcases as $testcase) {
-            if ($isAbort) {
-                break;
+        list ($merged, $pseudoTestCase) = $this->merge_tests_if_possible($testCases);
+        
+        if ($merged) {
+            list ($outcome, $testResult) = $this->run_one_test($code, $pseudoTestCase);
+            if ($outcome == 0) {
+                $testResults = $this->split_results($testResult, $testCases);
             }
-            $options = new stdClass();
-            $options->input = isset($testcase->stdin) ? $testcase->stdin : '';
-            $options->output = $testcase->output;
-            $taskId = onlinejudge_submit_task($cmid, $userid, 'c_sandbox',
-                array('main.c' => $this->make_test($code, $testcase->testcode)),
-                'questiontype_ccode',
-                $options);
-            $task = onlinejudge_judge($taskId);
-
-            $testresult = new stdClass;
-            $testresult->outcome = $task->status;
-            $testresult->testcode = $testcase->testcode;
-            $testresult->expected = $testcase->output;
-            $testresult->mark = $testresult->outcome == ONLINEJUDGE_STATUS_ACCEPTED ? 1.0 : 0.0;
-            $testresult->hidden = $testcase->hidden;
-            if (in_array($testresult->outcome, $nonAbortStatuses)) {
-                $testresult->output = $task->stdout;
+            elseif ($outcome == 1) { // Compilation error. No point in trying again unmerged
+                $testResults[] = $testResult;
             }
             else {
-                $isAbort = TRUE;
-                $testresult->output = $this->abortMessage($task);
+                $merged = False;  // If runtime error, force a retry on each individual test
             }
-            $testResults[] = $testresult;
-            $DB->delete_records('onlinejudge_tasks', array('id'=>$taskId));
-            //echo "Result: " . $task->status . "<br>" . $task->stdout . "<br>";
+
+        }
+        if (!$merged) {  // Either we didn't merge the tests or we did but got a runtime error
+            foreach ($testCases as $testCase) {
+                list ($outcome, $testResult) = $this->run_one_test($code, $testCase);
+                $testResults[] = $testResult;
+                if ($outcome != 0) {
+                    break;
+                }
+            }
         }
 
     	return $testResults;
     }
     
     
-    // Count the number of errors in the given array of test results.
-    // If $hiddenonly is true, count only the errors in the hidden tests
-    protected function count_errors($testResults, $hiddenonly = False) {
-    	$cnt = 0;
-    	foreach ($testResults as $test) {
-            if ($test->outcome != ONLINEJUDGE_STATUS_ACCEPTED && (!$hiddenonly || $test->hidden)) {
-                $cnt++;
-            }
-    	}
-    	return $cnt;
+    private function run_one_test($studentCode, $testCase) {
+        // Run one test through the online judge. The result is a 2-element
+        // array containing an outcome and a standard testResult
+        // object which has attributes isCorrect and output where
+        // output is the actual output.
+        // The outcome is either 0 for a normal run, 1 for a compilation error
+        // or 2 for a runtime error.
+        $cmid = 0;      // AFAIK, the only thing that matters is that this
+                        // number doesn't match the module ID of an active
+                        // on-line assignment module.
+        $userid = 9999; // Seems relevant only to the onlinejudge asst module
+        $nonAbortStatuses = array(
+            ONLINEJUDGE_STATUS_ACCEPTED,
+            ONLINEJUDGE_STATUS_WRONG_ANSWER,
+            ONLINEJUDGE_STATUS_PRESENTATION_ERROR);
+        $is_abort = FALSE;
+        $options = new stdClass();
+        $options->input = isset($testCase->stdin) ? $testCase->stdin : '';
+        $options->output = $testCase->output;
+        $test_prog = $this->make_test($studentCode, $testCase->testcode);
+        $taskId = onlinejudge_submit_task($cmid, $userid, 'c_sandbox',
+            array('main.c' => $test_prog),
+            'questiontype_ccode',
+            $options);
+        $task = onlinejudge_judge($taskId);
+
+        $testResult = new stdClass;
+        $testResult->isCorrect = $task->status == ONLINEJUDGE_STATUS_ACCEPTED;
+        if (in_array($task->status, $nonAbortStatuses)) {
+            $testResult->output = $task->stdout;
+            $outcome = 0;
+        }
+        else {
+            $testResult->output = $this->abortMessage($task);
+            $outcome = $task->status == ONLINEJUDGE_STATUS_COMPILATION_ERROR ? 1 : 2;
+        }
+
+        return array($outcome, $testResult);
+        // TODO figure out how to clean up the onlinejudge_tasks AND the
+        // associated fs entries (stored in the mdl_files table).
+        //$DB->delete_records('onlinejudge_tasks', array('id'=>$taskId));
     }
+    
+    
+    private function split_results($testResult, $testCases) {
+        // Split the result of a run from a set of merged testcases into a 
+        // set of individual results. Should only be called if the run
+        // did not abort from a syntax error, exception etc.
+
+        $outputs = explode($this::SEPARATOR . "\n", $testResult->output);
+        $testResults = array();
+        assert(count($testCases) == count($outputs));
+        $i = 0;
+        foreach($testCases as $testCase) {
+            $testResult = new stdClass();
+            $testResult->output = $got = $outputs[$i];
+            $expected = $testCase->output;
+            $cleanGot = $this->clean($got);
+            $cleanExpected = $this->clean($expected);
+            $testResult->isCorrect = ($this->clean($got) == $this->clean($expected));
+            $testResults[] = $testResult;
+            $i++;
+        }
+
+        return $testResults;
+    }
+    
+  
     
     // Built pseudo output to describe the particular error message from
     // the judge server.
@@ -128,7 +175,6 @@ class qtype_ccode_question extends qtype_progcode_question {
     }
         
     
-    
     // Construct a C test program from the given student code plus the 
     // testcase's test code.
     // There are two basic types of tests:
@@ -142,33 +188,90 @@ class qtype_ccode_question extends qtype_progcode_question {
     // Type 1 tests are identified by the fact that the testcase test code is
     // blank. The code to run is then just the student's code.
     // 
-    // Type 2 testing can be further broken down into:
-    // (a) Tests where the entire main testing function, plus any support
-    //     functions and #includes is supplied within the testcase. In this case
-    //     the program to run consists of any #include statements (stripped from
-    //     the start of the testcase code) followed by the student's code followed
-    //     by the rest of the testcase code. This subcase is identified by a
-    //     regular expression pattern match with int main() { ... }.
-    // (b) Tests where the testcase code is statements (including at least
-    //     one printf) to be included within a generic main function. Here the
-    //     test program to run is a single #include <stdio.h>, the student's code
-    //     and a main function with the body taken from the testcase.
-    //
+    // In type 2 tests the testcase code is statements (including at least
+    // one output statement) to be included within a generic main function. Here the
+    // test program to run is a single #include <stdio.h>, and other preprocessor
+    // statements pulled from the test(s), the student's code
+    // and a main function with the body being all the non-preprocessor test
+    // statements.
+
     private function make_test($studentCode, $testCode) {
-        $testLines = explode("\n", $testCode);
-        assert (count($testLines) == 1);  // Until I've implemented multiline tests
-        $testMain = <<<EOD
-#include <stdio.h>
-        
-$studentCode
-        
-int main() {
-   $testCode;
-   return 0;
-}
-EOD;
-        $code = htmlspecialchars(print_r ($testMain, TRUE));
-        //echo "<pre>$code</pre>";
-        return $testMain;
+        if (trim($testCode) == '') {
+            return $studentCode;
+        }
+        else {  // Filter all preprocessor lines to the start
+            $testLines = explode("\n", $testCode);
+            $testMain = "#include <stdio.h>\n";
+            $lines = array();
+            foreach ($testLines as $line) {
+                if (substr(trim($line), 0, 1) == '#') {
+                    $testMain .= $line . "\n";
+                }
+                else {
+                    $lines[] = "    $line";
+                }
+            }
+            $testCode = implode("\n", $lines);
+            $testMain .= "\n$studentCode\n\nint main() {\n$testCode\n    return 0;}\n";
+            //$code = htmlspecialchars(print_r ($testMain, TRUE));
+            //echo "<pre>$code</pre>";
+            return $testMain;
+        }
     }
+    
+    
+    private function merge_tests_if_possible($testCases) {
+        // If all testcases are non-empty, merge all the tests into
+        // a single pseudo testcase in which a special separator line
+        // is printed between each actual test.
+
+        $mergable = True;
+        $tests = array();
+        $expecteds = array();
+        foreach ($testCases as $testCase) {
+            if ($testCase->testcode == "") {
+                $mergable = False;
+            }
+            else {
+                $tests[] = $testCase->testcode;
+                $expecteds[] = $testCase->output;
+            }
+        }
+        
+        if ($mergable && count($testCases) > 0) {
+            $test = new stdClass();
+            $test->testcode = implode("\n    puts(\"" . $this::SEPARATOR . "\");\n", $tests);
+            $test->output = implode($this::SEPARATOR . "\n", $expecteds);
+            return array(True, $test);
+        }
+        else {
+            return array(False, NULL);
+        }
+    }
+    
+   
+    
+    private function clean($s) {
+        // A copy of $s with trailing lines removed and trailing white space
+        // from each line removed.
+        $bits = explode("\n", $s);
+        while (count($bits) > 0) {
+            if (trim($bits[count($bits)-1]) == '') {
+                array_pop($bits);
+            }
+            else {
+                break;
+            }
+        }
+        $new_s = '';
+        foreach ($bits as $bit) {
+            while (strlen($bit) > 0 && substr($bit, strlen($bit) - 1, 1) == ' ') {
+                $bit = substr($bit, 0, strlen($bit) - 1);
+            }
+            $new_s .= $bit . "\n";
+        }
+        
+        return $new_s;
+    }
+        
 }
