@@ -113,6 +113,8 @@ class qtype_ccode_question_test extends UnitTestCase {
     // Now test ccode's judging of questions (via sandbox of course)
     
     public function test_grade_response_right() {
+        // Check grading of a "write-a-function" question with multiple
+        // test cases and a correct solution
         $q = test_question_maker::make_question('ccode', 'sqr');
         $response = array('answer' => $this->_good_sqr_code());
         $result = $q->grade_response($response);
@@ -127,6 +129,10 @@ class qtype_ccode_question_test extends UnitTestCase {
     
     
     public function test_grade_response_compile_errors() {
+        // Check grading of a "write-a-function" question with multiple
+        // test cases and two different bad solutions, one causing a link
+        // error and the other a compile error. Both get treated as
+        // compile errors.
         $this->checkCompileErrors('int square(int n) { return n * n; }', 'COMPILE ERROR');
         $this->checkCompileErrors('int sqr(int n) { return n * n }', 'COMPILE ERROR');
     }
@@ -146,16 +152,13 @@ class qtype_ccode_question_test extends UnitTestCase {
         $this->assertFalse($tr->isCorrect);
         $this->assertEqual(substr($tr->output, 0, strlen($expectedError)), $expectedError);
     }
-       
-    
-    private function _good_sqr_code() {
-        return "int sqr(int n) { return n * n; }\n";
-    }
     
     
     public function test_grade_response_wrong_ans() {
+        // Check grading of a "write-a-function" question with multiple
+        // test cases when the solution is right for some of the tests only.
         $q = test_question_maker::make_question('ccode', 'sqr');
-        $code = "int sqr(int x) { return x == 0 ? 1 : 3 * x; }";
+        $code = "int sqr(int x) { return x >= 0 ? x * x : -x * x; }";
         $response = array('answer' => $code);
         $result = $q->grade_response($response);
         $this->assertEqual($result[0], 0);  // Should be zero mark
@@ -163,28 +166,97 @@ class qtype_ccode_question_test extends UnitTestCase {
         $this->assertTrue(isset($result[2]['_testresults']));
         $testResults = unserialize($result[2]['_testresults']);
         $n = count($testResults);
-        $i = 0;
-        foreach ($testResults as $tr) {
-            $i++;
-            $this->assertEqual($tr->isCorrect, FALSE);
-        }
+        $this->assertTrue($testResults[0]->isCorrect);
+        $this->assertTrue($testResults[1]->isCorrect);
+        $this->assertFalse($testResults[2]->isCorrect);
+        $this->assertFalse($testResults[3]->isCorrect);
     } 
-  
-    /*
-    public function test_grade_syntax_error() {
+    
+
+    public function test_grade_runtime_error() {
+        // Check grading of a "write-a-function" question with multiple
+        // test cases when the solution is right for some of the tests but
+        // gives a runtime error for a later one. [Should force a re-run
+        // without merging]
         $q = test_question_maker::make_question('ccode', 'sqr');
-        $code = "def sqr(x): return x  x";
+        $code = "int sqr(int n) { return n != -16 ? n * n : *((int*) 0); }\n";
         $response = array('answer' => $code);
         $result = $q->grade_response($response);
         $this->assertEqual($result[0], 0);
         $this->assertEqual($result[1], question_state::$gradedwrong);
-        $this->assertTrue(isset($result[2]['_testresults']));
         $testResults = unserialize($result[2]['_testresults']);
-        $this->assertEqual(count($testResults), 1);
-        $this->assertEqual($testResults[0]->outcome, 'Syntax Error');
+        $this->assertTrue($testResults[0]->isCorrect);
+        $this->assertEqual($testResults[0]->output, "0");
+        $this->assertTrue($testResults[1]->isCorrect);
+        $this->assertEqual($testResults[1]->output, "49");
+        $this->assertTrue($testResults[2]->isCorrect);
+        $this->assertEqual($testResults[2]->output, "121");
+        $this->assertFalse($testResults[3]->isCorrect);
+        $this->assertEqual(substr($testResults[3]->output, 0, strlen("RUNTIME ERROR")), "RUNTIME ERROR");
     }
     
     
+    
+    public function test_copy_stdin_to_stdout() {
+        // Test of a question that copies standard in to standard out.
+        $q = test_question_maker::make_question('ccode', 'copyStdin');
+$code =
+"#include <stdio.h>
+int main() {
+    int c;
+    while (1) {
+       c = getchar();
+       if (c == EOF) break;
+       putchar(c);
+    }
+    return 0;
+}";
+        $response = array('answer' => $code);
+        $result = $q->grade_response($response);
+        $this->assertEqual($result[0], 1);
+        $this->assertEqual($result[1], question_state::$gradedright);
+        $testResults = unserialize($result[2]['_testresults']);
+        $this->assertEqual(count($testResults), 3);
+        foreach ($testResults as $tr) {
+            $this->assertTrue($tr->isCorrect);
+        }
+    }
+    
+    public function test_illegal_function_call() {
+        // Check grading of a "write-a-function" question with multiple
+        // test cases when the solution tried to do an illegal function call
+        // (fork).
+        $q = test_question_maker::make_question('ccode', 'sqr');
+        $code =
+"#include <linux/unistd.h>
+int sqr(int n) {
+    if (n == 0) return 0;
+    else {
+        int i = 0;
+        for (i = 0; i < 20; i++) 
+            fork();
+    }
+}";
+        $response = array('answer' => $code);
+        $result = $q->grade_response($response);
+        $this->assertEqual($result[0], 0);
+        $this->assertEqual($result[1], question_state::$gradedwrong);
+        $testResults = unserialize($result[2]['_testresults']);
+        $this->assertEqual(count($testResults), 2);
+        $this->assertTrue($testResults[0]->isCorrect);
+        $this->assertEqual($testResults[0]->output, "0");
+        $this->assertFalse($testResults[1]->isCorrect);
+        $this->assertEqual(substr($testResults[1]->output, 0,
+                strlen("CALL TO A RESTRICTED LIBRARY FUNCTION.")),
+                "CALL TO A RESTRICTED LIBRARY FUNCTION.");
+    } 
+    
+        
+    private function _good_sqr_code() {
+        return "int sqr(int n) { return n * n; }\n";
+    }
+  
+  /*
     public function test_grade_runtime_error() {
         $q = test_question_maker::make_question('ccode', 'sqr');
         $code = "def sqr(x): return x * y";

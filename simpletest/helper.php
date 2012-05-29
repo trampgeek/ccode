@@ -131,7 +131,7 @@ class qtype_ccode_test_helper extends question_test_helper {
     /**
      * Makes a ccode question that loops forever, to test sandbox timeout.
      * @return qtype_ccode_question
-     */
+     *
     public function make_ccode_question_timeout() {
         question_bank::load_question_definition_classes('ccode');
         $ccode = new qtype_ccode_question();
@@ -149,5 +149,7 @@ class qtype_ccode_test_helper extends question_test_helper {
         $ccode->unitgradingtype = 0;
         $ccode->unitpenalty = 0.2;
         return $ccode;
-    }   
+    }  
+      
+     */ 
 }

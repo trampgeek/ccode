@@ -27,4 +27,6 @@ $string['ccode'] = 'C code';
 $string['ccodesummary'] = 'Answer is C code that is executed in the context of a set of test cases to determine its correctness.';
 $string['ccode_help'] = 'In response to a question, which is a specification for a C function or program, the respondent enters C source code that satisfies the specification.';
 $string['ccode_link'] = 'question/type/pycode';
+$string['editingccode'] = 'Editing a C-code Question';
+$string['addingccode'] = 'Adding a new C-code Question';
 $string['xmlccodeformaterror'] = 'XML format error in c-code question';

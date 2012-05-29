@@ -102,7 +102,7 @@ class qtype_ccode_question extends qtype_progcode_question {
         $options->input = isset($testCase->stdin) ? $testCase->stdin : '';
         $options->output = $testCase->output;
         $test_prog = $this->make_test($studentCode, $testCase->testcode);
-        $taskId = onlinejudge_submit_task($cmid, $userid, 'c_sandbox',
+        $taskId = onlinejudge_submit_task($cmid, $userid, 'c_warn2err_sandbox',
             array('main.c' => $test_prog),
             'questiontype_ccode',
             $options);
@@ -159,6 +159,7 @@ class qtype_ccode_question extends qtype_progcode_question {
             ONLINEJUDGE_STATUS_MEMORY_LIMIT_EXCEED   => 'Memory limit exceeded.',
             ONLINEJUDGE_STATUS_OUTPUT_LIMIT_EXCEED   => 'Excessive output.',
             ONLINEJUDGE_STATUS_RESTRICTED_FUNCTIONS  => 'Call to a restricted library function.',
+            ONLINEJUDGE_STATUS_ABNORMAL_TERMINATION  => 'Bad returncode from main function.',
             ONLINEJUDGE_STATUS_RUNTIME_ERROR         => 'Runtime error.',
             ONLINEJUDGE_STATUS_TIME_LIMIT_EXCEED     => 'Time limit exceeded.');
         
