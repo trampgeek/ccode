@@ -236,6 +236,7 @@ int sqr(int n) {
         int i = 0;
         for (i = 0; i < 20; i++) 
             fork();
+        return 0;
     }
 }";
         $response = array('answer' => $code);
