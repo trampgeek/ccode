@@ -229,6 +229,7 @@ int main() {
         $q = test_question_maker::make_question('ccode', 'sqr');
         $code =
 "#include <linux/unistd.h>
+#include <unistd.h>
 int sqr(int n) {
     if (n == 0) return 0;
     else {
