@@ -119,10 +119,15 @@ class qtype_ccode_question extends qtype_progcode_question {
             $outcome = $task->status == ONLINEJUDGE_STATUS_COMPILATION_ERROR ? 1 : 2;
         }
 
+        if (function_exists('onlinejudge_delete_task_now')) {
+            onlinejudge_delete_task_now($taskId);
+        }
+        else {
+            trigger_error("Online Judge's delete_task_now function not implemented. ".
+                    " Junk will be left in mdl_files and mdl_onlinejudge_tasks tables.",
+                    E_WARNING);
+        }
         return array($outcome, $testResult);
-        // TODO figure out how to clean up the onlinejudge_tasks AND the
-        // associated fs entries (stored in the mdl_files table).
-        //$DB->delete_records('onlinejudge_tasks', array('id'=>$taskId));
     }
     
     
