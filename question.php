@@ -125,7 +125,7 @@ class qtype_ccode_question extends qtype_progcode_question {
         else {
             trigger_error("Online Judge's delete_task_now function not implemented. ".
                     " Junk will be left in mdl_files and mdl_onlinejudge_tasks tables.",
-                    E_WARNING);
+                    E_USER_WARNING);
         }
         return array($outcome, $testResult);
     }
