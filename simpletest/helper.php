@@ -35,7 +35,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 class qtype_ccode_test_helper extends question_test_helper {
     public function get_test_questions() {
-        return array('sqr', 'helloFunc', 'copyStdin', 'timeout', 'exceptions');
+        return array('sqr', 'sqrNoSemicolons', 'helloFunc', 'copyStdin', 'timeout', 'exceptions');
     }
 
     /**
@@ -72,6 +72,43 @@ class qtype_ccode_test_helper extends question_test_helper {
         $ccode->unitpenalty = 0.2;
         return $ccode;
     }
+    
+    /**
+     * Makes a ccode question asking for a sqr() function but without
+     * semicolons on the ends of all the printf testcases.
+     * @return qtype_ccode_question
+     */
+    public function make_ccode_question_sqrNoSemicolons() {
+        question_bank::load_question_definition_classes('ccode');
+        $ccode = new qtype_ccode_question();
+        test_question_maker::initialise_a_question($ccode);
+        $ccode->name = 'Function to square a number n';
+        $ccode->questiontext = 'Write a function int sqr(int n) that returns n squared.';
+        $ccode->generalfeedback = 'No feedback available for ccode questions.';
+        $ccode->testcases = array(
+            (object) array('testcode'       => 'printf("%d", sqr(0))',
+                           'output'         => '0',
+                           'hidden'         => 0,
+                           'useasexample'   => 1),
+            (object) array('testcode'       => 'printf("%d", sqr(7))',
+                           'output'         => '49',
+                           'hidden'         => 0,
+                           'useasexample'   => 1),
+            (object) array('testcode'       => 'printf("%d", sqr(-11))',
+                           'output'         => '121',
+                           'hidden'         => 0,
+                           'useasexample'   => 0),
+           (object) array('testcode'       => 'printf("%d", sqr(-16))',
+                           'output'         => '256',
+                           'hidden'         => 1,
+                           'useasexample'   => 0)
+        );
+        $ccode->qtype = question_bank::get_qtype('ccode');
+        $ccode->unitgradingtype = 0;
+        $ccode->unitpenalty = 0.2;
+        return $ccode;
+    }
+
     
     /**
      * Makes a ccode question to write a function that just print 'Hello <name>'
