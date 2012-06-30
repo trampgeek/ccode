@@ -239,7 +239,7 @@ class qtype_ccode_question extends qtype_progcode_question {
                 $mergable = False;
             }
             else {
-                $tests[] = $testCase->testcode;
+                $tests[] = $this->addSemicolon($testCase->testcode);
                 $expecteds[] = $testCase->output;
             }
         }
@@ -278,6 +278,18 @@ class qtype_ccode_question extends qtype_progcode_question {
         }
         
         return $new_s;
+    }
+    
+    
+    private function addSemicolon($test) {
+        // Return $test with a semicolon appended if it doesn't already have one
+        $trimmed = trim($test);
+        if ($trimmed[strlen($trimmed) - 1] != ';') {
+            return $test . ';';
+        }
+        else {
+            return $test;
+        }
     }
         
 }

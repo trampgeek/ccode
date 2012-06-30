@@ -52,19 +52,23 @@ class qtype_ccode_test_helper extends question_test_helper {
         $ccode->testcases = array(
             (object) array('testcode'       => 'printf("%d", sqr(0));',
                            'output'         => '0',
-                           'hidden'         => 0,
+                           'display'        => 'SHOW',
+                           'hiderestiffail' => 0,
                            'useasexample'   => 1),
             (object) array('testcode'       => 'printf("%d", sqr(7));',
                            'output'         => '49',
-                           'hidden'         => 0,
+                           'display'        => 'SHOW',
+                           'hiderestiffail' => 0,
                            'useasexample'   => 1),
             (object) array('testcode'       => 'printf("%d", sqr(-11));',
                            'output'         => '121',
-                           'hidden'         => 0,
+                           'display'        => 'SHOW',
+                           'hiderestiffail' => 0,
                            'useasexample'   => 0),
-           (object) array('testcode'       => 'printf("%d", sqr(-16));',
+           (object) array('testcode'        => 'printf("%d", sqr(-16));',
                            'output'         => '256',
-                           'hidden'         => 1,
+                           'display'        => 'HIDE',
+                           'hiderestiffail' => 0,
                            'useasexample'   => 0)
         );
         $ccode->qtype = question_bank::get_qtype('ccode');
@@ -88,19 +92,23 @@ class qtype_ccode_test_helper extends question_test_helper {
         $ccode->testcases = array(
             (object) array('testcode'       => 'printf("%d", sqr(0))',
                            'output'         => '0',
-                           'hidden'         => 0,
+                           'display'        => 'SHOW',
+                           'hiderestiffail' => 0,
                            'useasexample'   => 1),
             (object) array('testcode'       => 'printf("%d", sqr(7))',
                            'output'         => '49',
-                           'hidden'         => 0,
+                           'display'        => 'SHOW',
+                           'hiderestiffail' => 0,
                            'useasexample'   => 1),
             (object) array('testcode'       => 'printf("%d", sqr(-11))',
                            'output'         => '121',
-                           'hidden'         => 0,
+                           'display'        => 'SHOW',
+                           'hiderestiffail' => 0,
                            'useasexample'   => 0),
-           (object) array('testcode'       => 'printf("%d", sqr(-16))',
+           (object) array('testcode'        => 'printf("%d", sqr(-16))',
                            'output'         => '256',
-                           'hidden'         => 1,
+                           'display'        => 'SHOW',
+                           'hiderestiffail' => 0,
                            'useasexample'   => 0)
         );
         $ccode->qtype = question_bank::get_qtype('ccode');
@@ -125,7 +133,9 @@ class qtype_ccode_test_helper extends question_test_helper {
         $ccode->testcases = array(
             (object) array('testcode' => '',
                           'output'    => 'Hello ENCN260 ',
-                          'hidden'    => 0)
+                          'display'   => 'SHOW',
+                          'hiderestiffail' => 0,
+                          'useasexample'   => 0)
         );
         $ccode->qtype = question_bank::get_qtype('ccode');
         $ccode->unitgradingtype = 0;
@@ -149,15 +159,21 @@ class qtype_ccode_test_helper extends question_test_helper {
             (object) array('testcode' => '',
                           'stdin'     => '',
                           'output'    => '',
-                          'hidden'    => 0),
+                          'display'   => 'SHOW',
+                          'useasexample'   => 0,
+                          'hiderestiffail' => 0),
             (object) array('testcode' => '',
                           'stdin'     => "Line1\n",
                           'output'    => "Line1\n",
-                          'hidden'    => 0),
+                          'display'   => 'SHOW',
+                          'useasexample'   => 0,
+                          'hiderestiffail' => 0),
             (object) array('testcode' => '',
                           'stdin'     => "Line1\nLine2\n",
                           'output'    => "Line1\nLine2\n",
-                          'hidden'    => 0)
+                          'display'   => 'SHOW',
+                          'useasexample'   => 0,
+                          'hiderestiffail' => 0)
         );
         $ccode->qtype = question_bank::get_qtype('ccode');
         $ccode->unitgradingtype = 0;
@@ -180,7 +196,7 @@ class qtype_ccode_test_helper extends question_test_helper {
             (object) array('testcode' => '',
                           'stdin'     => '',
                           'output'    => '',
-                          'hidden'    => 0)
+                          'display'  => 'SHOW', 'hiderestiffail' => 0)
         );
         $ccode->qtype = question_bank::get_qtype('ccode');
         $ccode->unitgradingtype = 0;

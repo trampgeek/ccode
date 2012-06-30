@@ -128,6 +128,23 @@ class qtype_ccode_question_test extends UnitTestCase {
     }
     
     
+    public function test_missing_semicolon() {
+        // Check that a missing semicolon in a simple printf test is reinsterted
+        // Check grading of a "write-a-function" question with multiple
+        // test cases and a correct solution
+        $q = test_question_maker::make_question('ccode', 'sqrNoSemicolons');
+        $response = array('answer' => $this->_good_sqr_code());
+        $result = $q->grade_response($response);
+        $this->assertEqual($result[0], 1); // Mark
+        $this->assertEqual($result[1], question_state::$gradedright);
+        $this->assertTrue(isset($result[2]['_testresults']));
+        $testResults = unserialize($result[2]['_testresults']);
+        foreach ($testResults as $tr) {
+            $this->assertTrue($tr->isCorrect);
+        }
+    }
+    
+    
     public function test_grade_response_compile_errors() {
         // Check grading of a "write-a-function" question with multiple
         // test cases and two different bad solutions, one causing a link
@@ -257,113 +274,5 @@ int sqr(int n) {
     private function _good_sqr_code() {
         return "int sqr(int n) { return n * n; }\n";
     }
-  
-  /*
-    public function test_grade_runtime_error() {
-        $q = test_question_maker::make_question('ccode', 'sqr');
-        $code = "def sqr(x): return x * y";
-        $response = array('answer' => $code);
-        $result = $q->grade_response($response);
-        $this->assertEqual($result[0], 0);
-        $this->assertEqual($result[1], question_state::$gradedwrong);
-        $this->assertTrue(isset($result[2]['_testresults']));
-        $testResults = unserialize($result[2]['_testresults']);
-        $this->assertEqual(count($testResults), 1);
-        $this->assertEqual($testResults[0]->outcome, 'Runtime Error');
-    }  
-
-    
-    public function test_grade_delayed_runtime_error() {
-        $q = test_question_maker::make_question('ccode', 'sqr');
-        $code = "def sqr(x):\n  if x != 11:\n    return x * x\n  else:\n    return y";
-        $response = array('answer' => $code);
-        $result = $q->grade_response($response);
-        $this->assertEqual($result[0], 0);
-        $this->assertEqual($result[1], question_state::$gradedwrong);
-        $this->assertTrue(isset($result[2]['_testresults']));
-        $testResults = unserialize($result[2]['_testresults']);
-        $this->assertEqual(count($testResults), 3);
-        $this->assertEqual($testResults[2]->outcome, 'Runtime Error');
-    }  
-    
-    
-    public function test_triple_quotes() {
-        $q = test_question_maker::make_question('ccode', 'sqr');
-        $code = <<<EOCODE
-def sqr(x):
-    """This is a function
-       that squares its parameter"""
-    return x * x
-EOCODE;
-        $response = array('answer' => $code);
-        $result = $q->grade_response($response);
-        $this->assertEqual($result[0], 1);
-        $this->assertEqual($result[1], question_state::$gradedright);
-        $this->assertTrue(isset($result[2]['_testresults']));
-        $testResults = unserialize($result[2]['_testresults']);
-        $n = count($testResults);
-        $i = 0;
-        foreach ($testResults as $tr) {
-            $i++;
-            $this->assertEqual($tr->outcome, 'Yes');
-            $this->assertEqual(trim($tr->expected), trim($tr->output));
-            $this->assertEqual($tr->mark, 1);
-            $this->assertEqual($tr->hidden, $i == $n ? 1 : 0); // last one hidden
-        }
-    }
-    
-    
-    public function test_helloFunc() {
-        // Check a question type with a function that prints output
-        $q = test_question_maker::make_question('ccode', 'helloFunc');
-        $code = "def sayHello(name):\n  print 'Hello ' + name";
-        $response = array('answer' => $code);
-        $result = $q->grade_response($response);
-        $this->assertEqual($result[0], 1);
-        $this->assertEqual($result[1], question_state::$gradedright);
-        $this->assertTrue(isset($result[2]['_testresults']));
-        $testResults = unserialize($result[2]['_testresults']);
-        $this->assertEqual(count($testResults), 4);
-    } 
-    
-    
-    public function test_copyStdin() {
-        // Check a question that reads stdin and writes to stdout
-        $q = test_question_maker::make_question('ccode', 'copyStdin');
-        $code = <<<EOCODE
-def copyStdin(n):
-  for i in range(n):
-    line = raw_input()
-    print line
-EOCODE;
-        $response = array('answer' => $code);
-        $result = $q->grade_response($response);
-        $this->assertEqual($result[0], 0);
-        $this->assertEqual($result[1], question_state::$gradedwrong);
-        $this->assertTrue(isset($result[2]['_testresults']));
-        $testResults = unserialize($result[2]['_testresults']);
-        $this->assertEqual(count($testResults), 4);
-        $this->assertEqual($testResults[0]->outcome, 'Yes');
-        $this->assertEqual($testResults[1]->outcome, 'Yes');
-        $this->assertEqual($testResults[2]->outcome, 'Yes');
-        $this->assertEqual($testResults[3]->outcome, 'Runtime Error');
-     }
-     
-     public function test_timeout() {
-         // Check a question that loops forever. Should cause sandbox timeout
-        $q = test_question_maker::make_question('ccode', 'timeout');
-        $code = "def timeout():\n  while (1):\n    pass";
-        $response = array('answer' => $code);
-        $result = $q->grade_response($response);
-        $this->assertEqual($result[0], 0);
-        $this->assertEqual($result[1], question_state::$gradedwrong);
-        $this->assertTrue(isset($result[2]['_testresults']));
-        $testResults = unserialize($result[2]['_testresults']);
-        $this->assertEqual(count($testResults), 1);
-        $this->assertEqual($testResults[0]->outcome, 'Runtime Error');
-        $this->assertEqual($testResults[0]->output, 'SIGTERM (timeout or too much memory?)');
-     } 
-     
-     */  
 }
 
