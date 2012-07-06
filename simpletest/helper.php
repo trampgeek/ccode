@@ -35,7 +35,9 @@ defined('MOODLE_INTERNAL') || die();
  */
 class qtype_ccode_test_helper extends question_test_helper {
     public function get_test_questions() {
-        return array('sqr', 'sqrNoSemicolons', 'helloFunc', 'copyStdin', 'timeout', 'exceptions');
+        return array('sqr', 'sqrNoSemicolons', 'helloFunc',
+            'copyStdin', 'timeout', 'exceptions', 'strToUpper',
+            'strToUpperFullMain');
     }
 
     /**
@@ -179,6 +181,93 @@ class qtype_ccode_test_helper extends question_test_helper {
         $ccode->unitgradingtype = 0;
         $ccode->unitpenalty = 0.2;
         return $ccode;
+    }
+    
+    
+    public function make_ccode_question_strToUpper() {
+        question_bank::load_question_definition_classes('ccode');
+        $ccode = new qtype_ccode_question();
+        test_question_maker::initialise_a_question($ccode);
+        $ccode->name = 'Function to convert string to uppercase';
+        $ccode->questiontext = 'Write a function void strToUpper(char s[]) that converts s to uppercase';
+        $ccode->generalfeedback = 'No feedback available for ccode questions.';
+        $ccode->testcases = array(
+            (object) array('testcode' => "
+#include <stdio.h>
+  #include <ctype.h>
+char s[] = {'1','@','a','B','c','d','E',';', 0};
+strToUpper(s);
+printf(\"%s\\n\", s);
+",
+                          'stdin'     => '',
+                          'output'    => '1@ABCDE;',
+                          'display'   => 'SHOW',
+                          'useasexample'   => 0,
+                          'hiderestiffail' => 0),
+            (object) array('testcode' => "
+  #include <stdio.h>
+#include <ctype.h>
+char s[] = {'1','@','A','b','C','D','e',';', 0};
+strToUpper(s);
+printf(\"%s\\n\", s);
+",
+                          'stdin'     => '',
+                          'output'    => '1@ABCDE;',
+                          'display'   => 'SHOW',
+                          'useasexample'   => 0,
+                          'hiderestiffail' => 0)
+        );
+        $ccode->qtype = question_bank::get_qtype('ccode');
+        $ccode->unitgradingtype = 0;
+        $ccode->unitpenalty = 0.2;
+        return $ccode;      
+    }
+    
+    
+    public function make_ccode_question_strToUpperFullMain() {
+        // A variant of strToUpper where test cases include an actual main func
+        question_bank::load_question_definition_classes('ccode');
+        $ccode = new qtype_ccode_question();
+        test_question_maker::initialise_a_question($ccode);
+        $ccode->name = 'Function to convert string to uppercase';
+        $ccode->questiontext = 'Write a function void strToUpper(char s[]) that converts s to uppercase';
+        $ccode->generalfeedback = 'No feedback available for ccode questions.';
+        $ccode->testcases = array(
+            (object) array('testcode' => "
+  #include <stdio.h>
+#include <ctype.h>
+int main() {
+  char s[] = {'1','@','a','B','c','d','E',';', 0};
+  strToUpper(s);
+  printf(\"%s\\n\", s);
+  return 0;
+}
+",
+                          'stdin'     => '',
+                          'output'    => '1@ABCDE;',
+                          'display'   => 'SHOW',
+                          'useasexample'   => 0,
+                          'hiderestiffail' => 0),
+            (object) array('testcode' => "
+  #include <stdio.h>
+#include <ctype.h>
+int main() {
+  char s[] = {'1','@','A','b','C','D','e',';', 0};
+  strToUpper(s);
+  printf(\"%s\\n\", s);
+  return 0;
+}
+",
+                          'stdin'     => '',
+                          'output'    => '1@ABCDE;',
+                          'display'   => 'SHOW',
+                          'useasexample'   => 0,
+                          'hiderestiffail' => 0)
+        );
+        $ccode->qtype = question_bank::get_qtype('ccode');
+        $ccode->unitgradingtype = 0;
+        $ccode->unitpenalty = 0.2;
+        return $ccode;      
     }
     
     /**
