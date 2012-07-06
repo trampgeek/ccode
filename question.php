@@ -39,7 +39,7 @@ require_once($CFG->dirroot . '/question/type/pycode/progcode/question.php');
  */
 class qtype_ccode_question extends qtype_progcode_question {
     
-    const SEPARATOR = '============';
+    const SEPARATOR = '====+=+=+=+====';
     
     // Check the correctness of a student's C code given the
     // response and and a set of testCases.
@@ -183,7 +183,7 @@ class qtype_ccode_question extends qtype_progcode_question {
     
     // Construct a C test program from the given student code plus the 
     // testcase's test code.
-    // There are two basic types of tests:
+    // There are two types of tests:
     // 1. Tests where the student writes the entire program and the test
     //    simply involves running that program with the stdin specified by
     //    the testcase.
@@ -194,59 +194,81 @@ class qtype_ccode_question extends qtype_progcode_question {
     // Type 1 tests are identified by the fact that the testcase test code is
     // blank. The code to run is then just the student's code.
     // 
-    // In type 2 tests the testcase code is statements (including at least
-    // one output statement) to be included within a generic main function. Here the
-    // test program to run is a single #include <stdio.h>, and other preprocessor
-    // statements pulled from the test(s), the student's code
-    // and a main function with the body being all the non-preprocessor test
-    // statements.
+    // Type 2 tests all into two subclasses:
+    // (a) Each testcase code is a full program, lacking only the student's
+    //     function declarations. In this case, the student's code is inserted
+    //     into each of the test programs after any preprocessor commands.
+    // (b) The testcase code is code fragments (including at least one output
+    //     statement) to be included within a generic main function. Here the
+    //     test program built from:
+    //        #include <stdio.h>
+    //        all preprocessor statements
+    //        the student's code
+    //        a main function with the body being all the non-preprocessor test
+    //            statements.
+    //
+    // Note that this function may be called for each individual test case
+    // or for the merged set of testcases if merge_tests_if_possible succeeded.
 
     private function make_test($studentCode, $testCode) {
         if (trim($testCode) == '') {
-            return $studentCode;
+            $testMain = $studentCode;
         }
-        else {  // Filter all preprocessor lines to the start
-            $testLines = explode("\n", $testCode);
-            $testMain = "#include <stdio.h>\n";
-            $lines = array();
-            foreach ($testLines as $line) {
-                if (substr(trim($line), 0, 1) == '#') {
-                    $testMain .= $line . "\n";
-                }
-                else {
-                    $lines[] = "    $line";
-                }
+        else {  
+            list ($preprocessorLines, $rest) = $this->separate_preprocessor_lines($testCode);
+            $stdio = "#include <stdio.h>"; // Every home should have one
+            if (!in_array($stdio, $preprocessorLines)) {
+                array_unshift($preprocessorLines, $stdio);
             }
-            $testCode = implode("\n", $lines);
-            $testMain .= "\n$studentCode\n\nint main() {\n$testCode\n    return 0;}\n";
-            //$code = htmlspecialchars(print_r ($testMain, TRUE));
-            //echo "<pre>$code</pre>";
-            return $testMain;
+            
+            $preprocString = implode("\n", $preprocessorLines) . "\n";
+            $restAsString = implode("\n", $rest);
+            if ($this->contains_main($restAsString)) {
+                $testMain = $preprocString . $studentCode . "\n" . $restAsString;
+            }
+            else {
+                $testMain = $preprocString . $studentCode . 
+                                "\nint main() {\n$restAsString\nreturn 0;\n}\n";
+            }
         }
+        
+        return $testMain;
     }
     
     
     private function merge_tests_if_possible($testCases) {
-        // If all testcases are non-empty, merge all the tests into
+        // If all testcases are non-empty and no main function is found
+        // in any of the tests, merge all the tests into
         // a single pseudo testcase in which a special separator line
         // is printed between each actual test.
+        // Preprocessor lines are pulled out to the start, and each
+        // original testcase is made into a block to isolate variable
+        // declarations.
 
         $mergable = True;
         $tests = array();
         $expecteds = array();
+        $preprocessorLines = array();
         foreach ($testCases as $testCase) {
-            if ($testCase->testcode == "") {
+            if ($testCase->testcode == "" ||
+                    $this->contains_main($testCase->testcode)) {
                 $mergable = False;
             }
             else {
-                $tests[] = $this->addSemicolon($testCase->testcode);
+                // Add a semicolon to the test code if necessary and make 
+                // it a separate block to isolate any variable declarations 
+                $code = $this->addSemicolon($testCase->testcode);
+                list($preproc, $rest) = $this->separate_preprocessor_lines($code);
+                $preprocessorLines = array_merge($preprocessorLines, $preproc);
+                $tests[] = "{\n" . implode("\n", $rest) ."\n}\n";
                 $expecteds[] = $testCase->output;
             }
         }
         
         if ($mergable && count($testCases) > 0) {
             $test = new stdClass();
-            $test->testcode = implode("\n    puts(\"" . $this::SEPARATOR . "\");\n", $tests);
+            $test->testcode = implode("\n", array_unique($preprocessorLines)) . "\n";
+            $test->testcode .= implode("\nputs(\"" . $this::SEPARATOR . "\");\n", $tests);
             $test->output = implode($this::SEPARATOR . "\n", $expecteds);
             return array(True, $test);
         }
@@ -255,11 +277,34 @@ class qtype_ccode_question extends qtype_progcode_question {
         }
     }
     
+    
+    private function separate_preprocessor_lines($code) {
+        // Extract all preprocessor lines into a separate string.
+        // Return an array of two arrays, the first containing all preprocessor lines
+        // and the second all other lines.
+        $preprocessor = array();
+        $rest = array();
+        $lines = explode("\n", $code);
+        foreach ($lines as $line) {
+            if (substr(trim($line), 0, 1) == '#') {
+                $preprocessor[] = $line;
+            }
+            else {
+                $rest[] = $line;
+            }
+        }
+        return array($preprocessor, $rest);
+    }
    
+    
+    private function contains_main($s) {
+        // True iff the string s contains the declaration of a main function
+        return preg_match('|int main\(.*\) *{|', $s);
+    }
     
     private function clean($s) {
         // A copy of $s with trailing lines removed and trailing white space
-        // from each line removed.
+        // from each li untionne removed.
         $bits = explode("\n", $s);
         while (count($bits) > 0) {
             if (trim($bits[count($bits)-1]) == '') {
