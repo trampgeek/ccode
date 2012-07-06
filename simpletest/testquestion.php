@@ -239,6 +239,55 @@ int main() {
         }
     }
     
+    
+    public function test_str_to_upper() {
+        // Check grading of a function with more complicated test code,
+        // requiring #includes to be extracted and test cases to be in
+        // separate blocks.
+        $q = test_question_maker::make_question('ccode', 'strToUpper');
+$code =
+"void strToUpper(char s[]) {
+    int i = 0;
+    while (s[i]) {
+       s[i] = toupper(s[i]);
+       i++;
+    }
+}
+";
+        $response = array('answer' => $code);
+        $result = $q->grade_response($response);
+        $this->assertEqual($result[0], 1);
+        $this->assertEqual($result[1], question_state::$gradedright);
+        $testResults = unserialize($result[2]['_testresults']);
+        $this->assertEqual(count($testResults), 2);
+        foreach ($testResults as $tr) {
+            $this->assertTrue($tr->isCorrect);
+        }
+    }
+    
+    public function test_str_to_upper_full_main() {
+        // This version has a full main function in the test
+        $q = test_question_maker::make_question('ccode', 'strToUpperFullMain');
+$code =
+"void strToUpper(char s[]) {
+    int i = 0;
+    while (s[i]) {
+       s[i] = toupper(s[i]);
+       i++;
+    }
+}
+";
+        $response = array('answer' => $code);
+        $result = $q->grade_response($response);
+        $this->assertEqual($result[0], 1);
+        $this->assertEqual($result[1], question_state::$gradedright);
+        $testResults = unserialize($result[2]['_testresults']);
+        $this->assertEqual(count($testResults), 2);
+        foreach ($testResults as $tr) {
+            $this->assertTrue($tr->isCorrect);
+        }
+    }
+    
     public function test_illegal_function_call() {
         // Check grading of a "write-a-function" question with multiple
         // test cases when the solution tried to do an illegal function call
