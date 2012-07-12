@@ -1,6 +1,6 @@
 textarea.progcode-answer, table.progcode-test-results td,
 table.progcodeexamples td,
-.testcaseexpression, .testcaseresult, .testcasestdin { 
+.testcaseexpression, .testcaseresult, .testcasestdin {
     font-family:courier,monospace;
 }
 
@@ -13,7 +13,7 @@ div.progcode-examples {
 }
 
 
-table.progcode-test-results td, table.progcode-test-results th, 
+table.progcode-test-results td, table.progcode-test-results th,
 table.progcodeexamples td, table.progcodeexamples th {
     border: 1px solid #B0B0B0;
 }
@@ -22,6 +22,9 @@ table.progcode-test-results .header, table.progcodeexamples .header {
     text-align: left;
 }
 
+p.for-example-para {
+    font-weight: bold;
+}
 
 div.progcode-test-results-good {
     background-color: #AAFFAA;
