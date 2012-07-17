@@ -38,9 +38,9 @@ require_once($CFG->dirroot . '/question/type/pycode/progcode/question.php');
  * Represents a 'ccode' question.
  */
 class qtype_ccode_question extends qtype_progcode_question {
-    
+
     const SEPARATOR = '====+=+=+=+====';
-    
+
     // Check the correctness of a student's C code given the
     // response and and a set of testCases.
     // Return value is an array of test-result objects.
@@ -51,10 +51,10 @@ class qtype_ccode_question extends qtype_progcode_question {
     // to bundle all tests into one run. If this fails with a runtime exception,
     // the tests are run separately. Otherwise, the results are expanded
     // into a set of individual pseudo test runs.
-    protected function run_tests($code, $testCases) {      
+    protected function run_tests($code, $testCases) {
         $testResults = array();
         list ($merged, $pseudoTestCase) = $this->merge_tests_if_possible($testCases);
-        
+
         if ($merged) {
             list ($outcome, $testResult) = $this->run_one_test($code, $pseudoTestCase);
             if ($outcome == 0) {
@@ -80,8 +80,8 @@ class qtype_ccode_question extends qtype_progcode_question {
 
     	return $testResults;
     }
-    
-    
+
+
     private function run_one_test($studentCode, $testCase) {
         // Run one test through the online judge. The result is a 2-element
         // array containing an outcome and a standard testResult
@@ -111,7 +111,7 @@ class qtype_ccode_question extends qtype_progcode_question {
         $testResult = new stdClass;
         $testResult->isCorrect = $task->status == ONLINEJUDGE_STATUS_ACCEPTED;
         if (in_array($task->status, $nonAbortStatuses)) {
-            $testResult->output = $task->stdout;
+            $testResult->output = $this->sanitise($task->stdout);
             $outcome = 0;
         }
         else {
@@ -129,10 +129,10 @@ class qtype_ccode_question extends qtype_progcode_question {
         }
         return array($outcome, $testResult);
     }
-    
-    
+
+
     private function split_results($testResult, $testCases) {
-        // Split the result of a run from a set of merged testcases into a 
+        // Split the result of a run from a set of merged testcases into a
         // set of individual results. Should only be called if the run
         // did not abort from a syntax error, exception etc.
 
@@ -153,9 +153,9 @@ class qtype_ccode_question extends qtype_progcode_question {
 
         return $testResults;
     }
-    
-  
-    
+
+
+
     // Built pseudo output to describe the particular error message from
     // the judge server.
     private function abortMessage($task) {
@@ -167,7 +167,7 @@ class qtype_ccode_question extends qtype_progcode_question {
             ONLINEJUDGE_STATUS_ABNORMAL_TERMINATION  => 'Bad returncode from main function.',
             ONLINEJUDGE_STATUS_RUNTIME_ERROR         => 'Runtime error.',
             ONLINEJUDGE_STATUS_TIME_LIMIT_EXCEED     => 'Time limit exceeded.');
-        
+
         if (isset($messages[$task->status])) {
             $message = strtoupper($messages[$task->status]);
             if ($task->status == ONLINEJUDGE_STATUS_COMPILATION_ERROR) {
@@ -179,9 +179,9 @@ class qtype_ccode_question extends qtype_progcode_question {
         }
         return $message . "\nFurther testing aborted.";
     }
-        
-    
-    // Construct a C test program from the given student code plus the 
+
+
+    // Construct a C test program from the given student code plus the
     // testcase's test code.
     // There are two types of tests:
     // 1. Tests where the student writes the entire program and the test
@@ -193,7 +193,7 @@ class qtype_ccode_question extends qtype_progcode_question {
     //
     // Type 1 tests are identified by the fact that the testcase test code is
     // blank. The code to run is then just the student's code.
-    // 
+    //
     // Type 2 tests all into two subclasses:
     // (a) Each testcase code is a full program, lacking only the student's
     //     function declarations. In this case, the student's code is inserted
@@ -214,28 +214,28 @@ class qtype_ccode_question extends qtype_progcode_question {
         if (trim($testCode) == '') {
             $testMain = $studentCode;
         }
-        else {  
+        else {
             list ($preprocessorLines, $rest) = $this->separate_preprocessor_lines($testCode);
             $stdio = "#include <stdio.h>"; // Every home should have one
             if (!in_array($stdio, $preprocessorLines)) {
                 array_unshift($preprocessorLines, $stdio);
             }
-            
+
             $preprocString = implode("\n", $preprocessorLines) . "\n";
             $restAsString = implode("\n", $rest);
             if ($this->contains_main($restAsString)) {
                 $testMain = $preprocString . $studentCode . "\n" . $restAsString;
             }
             else {
-                $testMain = $preprocString . $studentCode . 
+                $testMain = $preprocString . $studentCode .
                                 "\nint main() {\n$restAsString\nreturn 0;\n}\n";
             }
         }
-        
+
         return $testMain;
     }
-    
-    
+
+
     private function merge_tests_if_possible($testCases) {
         // If all testcases are non-empty and no main function is found
         // in any of the tests, merge all the tests into
@@ -255,8 +255,8 @@ class qtype_ccode_question extends qtype_progcode_question {
                 $mergable = False;
             }
             else {
-                // Add a semicolon to the test code if necessary and make 
-                // it a separate block to isolate any variable declarations 
+                // Add a semicolon to the test code if necessary and make
+                // it a separate block to isolate any variable declarations
                 $code = $this->addSemicolon($testCase->testcode);
                 list($preproc, $rest) = $this->separate_preprocessor_lines($code);
                 $preprocessorLines = array_merge($preprocessorLines, $preproc);
@@ -264,7 +264,7 @@ class qtype_ccode_question extends qtype_progcode_question {
                 $expecteds[] = $testCase->output;
             }
         }
-        
+
         if ($mergable && count($testCases) > 0) {
             $test = new stdClass();
             $test->testcode = implode("\n", array_unique($preprocessorLines)) . "\n";
@@ -276,8 +276,8 @@ class qtype_ccode_question extends qtype_progcode_question {
             return array(False, NULL);
         }
     }
-    
-    
+
+
     private function separate_preprocessor_lines($code) {
         // Extract all preprocessor lines into a separate string.
         // Return an array of two arrays, the first containing all preprocessor lines
@@ -295,13 +295,13 @@ class qtype_ccode_question extends qtype_progcode_question {
         }
         return array($preprocessor, $rest);
     }
-   
-    
+
+
     private function contains_main($s) {
         // True iff the string s contains the declaration of a main function
         return preg_match('|int main\(.*\) *{|', $s);
     }
-    
+
     private function clean($s) {
         // A copy of $s with trailing lines removed and trailing white space
         // from each li untionne removed.
@@ -321,11 +321,11 @@ class qtype_ccode_question extends qtype_progcode_question {
             }
             $new_s .= $bit . "\n";
         }
-        
+
         return $new_s;
     }
-    
-    
+
+
     private function addSemicolon($test) {
         // Return $test with a semicolon appended if it doesn't already have one
         $trimmed = trim($test);
@@ -336,5 +336,21 @@ class qtype_ccode_question extends qtype_progcode_question {
             return $test;
         }
     }
-        
+
+
+    private function sanitise($progOutput) {
+        // Return given $progOutput from a C program, sanitised by replacing
+        // all non-printable standard ascii chars except newline with hex
+        // equivalents.
+        $s = '';
+        for ($i = 0, $len = strlen($progOutput); $i < $len; $i++) {
+            $c = $progOutput[$i];
+            if (($c < " " && $c != "\n") || $c > "\x7E") {
+                $c = '\\x' . sprintf("%02x", ord($c));
+            }
+            $s .= $c;
+        }
+        return $s;
+    }
+
 }
