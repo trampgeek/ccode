@@ -1,7 +1,3 @@
-pre, code, tt {
-    font: 1.0em monospace;
-}
-
 textarea.progcode-answer, table.progcode-test-results td,
 table.progcodeexamples td,
 .testcaseexpression, .testcaseresult, .testcasestdin {
