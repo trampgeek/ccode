@@ -110,6 +110,10 @@ class qtype_ccode_question extends qtype_progcode_question {
 
         $testResult = new stdClass;
         $testResult->isCorrect = $task->status == ONLINEJUDGE_STATUS_ACCEPTED;
+
+        // TODO: consider how to implement silent trimming of extra white space
+        // from the ends of lines.
+
         if (in_array($task->status, $nonAbortStatuses)) {
             $testResult->output = $this->sanitise($task->stdout);
             $outcome = 0;
@@ -215,10 +219,21 @@ class qtype_ccode_question extends qtype_progcode_question {
             $testMain = $studentCode;
         }
         else {
+            // When testing code fragments or functions, include a standard
+            // set of include files. TODO: Consider carefully. Is this right?
             list ($preprocessorLines, $rest) = $this->separate_preprocessor_lines($testCode);
-            $stdio = "#include <stdio.h>"; // Every home should have one
-            if (!in_array($stdio, $preprocessorLines)) {
-                array_unshift($preprocessorLines, $stdio);
+            $stdIncludes = array(
+                "#include <stdio.h>",
+                "#include <stdlib.h>",
+                "#include <math.h>",
+                "#include <ctype.h>",
+                "#include <string.h>"
+            );
+
+            foreach ($stdIncludes as $include) {
+                if (!in_array($include, $preprocessorLines)) {
+                    array_unshift($preprocessorLines, $include);
+                }
             }
 
             $preprocString = implode("\n", $preprocessorLines) . "\n";
@@ -352,5 +367,4 @@ class qtype_ccode_question extends qtype_progcode_question {
         }
         return $s;
     }
-
 }
