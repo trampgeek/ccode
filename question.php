@@ -204,7 +204,7 @@ class qtype_ccode_question extends qtype_progcode_question {
     //     into each of the test programs after any preprocessor commands.
     // (b) The testcase code is code fragments (including at least one output
     //     statement) to be included within a generic main function. Here the
-    //     test program built from:
+    //     test program is built from:
     //        #include <stdio.h>
     //        all preprocessor statements
     //        the student's code
@@ -314,7 +314,7 @@ class qtype_ccode_question extends qtype_progcode_question {
 
     private function contains_main($s) {
         // True iff the string s contains the declaration of a main function
-        return preg_match('|int main\(.*\) *{|', $s);
+        return preg_match('|int\s+main\(.*\)\s+{|s', $s);
     }
 
     private function clean($s) {
