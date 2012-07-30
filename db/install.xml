@@ -9,8 +9,8 @@
         <FIELD NAME="id"         TYPE="int"  NOTNULL="true" UNSIGNED="false" SEQUENCE="true" NEXT="questionid"/>
         <FIELD NAME="questionid" TYPE="int"  NOTNULL="true" UNSIGNED="false" SEQUENCE="false" COMMENT="Foreign key referencing question to which this test case relates" PREVIOUS="id" NEXT="testcode"/>
         <FIELD NAME="testcode"   TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Test input code that is appended to the students code before submission" PREVIOUS="questionid" NEXT="stdin"/>
-        <FIELD NAME="stdin"      TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The standard input to the program during the test. Empty for most questions" PREVIOUS="testcode" NEXT="output" />
-        <FIELD NAME="output"     TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The expected output after running the student's code and executing the shell input" PREVIOUS="stdin" NEXT="useasexample"/>
+        <FIELD NAME="stdin"      TYPE="text" LENGTH="medium" NOTNULL="false" SEQUENCE="false" COMMENT="The standard input to the program during the test. Empty for most questions" PREVIOUS="testcode" NEXT="output" />
+        <FIELD NAME="output"     TYPE="text" LENGTH="medium" NOTNULL="false" SEQUENCE="false" COMMENT="The expected output after running the student's code and executing the shell input" PREVIOUS="stdin" NEXT="useasexample"/>
         <FIELD NAME="useasexample" TYPE="int" LENGTH="1" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="True if this testcase is to be displayed in the spec as an example of how the function works." PREVIOUS="output" NEXT="display"/>
         <FIELD NAME="display"    TYPE="char" LENGTH="30" NOTNULL="true" DEFAULT="SHOW" SEQUENCE="false" COMMENT="Controls display of this testcase to the students. One of SHOW, HIDE, HIDE_IF_FAIL, HIDE_IF_SUCCEED" PREVIOUS="useasexample" NEXT="hiderestiffail"/>
         <FIELD NAME="hiderestiffail" TYPE="int" LENGTH="1" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="If this test fails, hide all subsequent tests regardless of their display settings" PREVIOUS="display"/>

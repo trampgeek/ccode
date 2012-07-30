@@ -1,12 +1,12 @@
 <?php
- 
+
 
 function xmldb_qtype_ccode_upgrade($oldversion) {
     global $CFG, $DB;
- 
+
     $result = TRUE;
     $dbman = $DB->get_manager();
- 
+
     if ($oldversion < 2010121022) {
 
         // Define table question_ccode_testcases to be created
@@ -30,7 +30,7 @@ function xmldb_qtype_ccode_upgrade($oldversion) {
         // ccode savepoint reached
         upgrade_plugin_savepoint(true, 2010121022, 'qtype', 'ccode');
     }
-    
+
     if ($oldversion < 2010121023) {
 
         // Define field useasexample to be added to question_ccode_testcases
@@ -45,7 +45,7 @@ function xmldb_qtype_ccode_upgrade($oldversion) {
         // ccode savepoint reached
         upgrade_plugin_savepoint(true, 2010121023, 'qtype', 'ccode');
     }
-    
+
     if ($oldversion < 2010121024) {
 
         // Define field hidden to be added to question_ccode_testcases
@@ -60,17 +60,17 @@ function xmldb_qtype_ccode_upgrade($oldversion) {
         // ccode savepoint reached
         upgrade_plugin_savepoint(true, 2010121024, 'qtype', 'ccode');
     }
-    
+
     if ($oldversion < 2011121545) {
-        
+
         $table = new xmldb_table('question_ccode_testcases');
-        
+
         // Rename expression to testcode
         $field = new xmldb_field('expression', XMLDB_TYPE_TEXT, null, null, null, null, null);
         if ($dbman->field_exists($table, $field)) {
             $dbman->rename_field($table, $field, 'testcode');
         }
- 
+
         // Rename result to output
         $field = new xmldb_field('result', XMLDB_TYPE_TEXT, null, null, null, null, null);
         if ($dbman->field_exists($table, $field)) {
@@ -86,10 +86,10 @@ function xmldb_qtype_ccode_upgrade($oldversion) {
         // ccode savepoint reached
         upgrade_plugin_savepoint(true, 2011121545, 'qtype', 'ccode');
     }
-    
-    // Version of 31 January 2012 modifies all existing questions to use 
+
+    // Version of 31 January 2012 modifies all existing questions to use
     // 'print f(x)' type tests rather than the shell-input version with just f(x)
-    
+
     if ($oldversion < 2012013101) {
         $rs = $DB->get_recordset_sql('
                 SELECT * from {question_ccode_testcases}');
@@ -111,10 +111,10 @@ function xmldb_qtype_ccode_upgrade($oldversion) {
         // ccode savepoint reached
         upgrade_plugin_savepoint(true, 2012013101, 'qtype', 'ccode');
     }
- 
+
     // Fix up bug in last upgrade -- replace all 'print print' occurrences
     // with a single print
-    
+
     if ($oldversion < 2012013102) {
         $rs = $DB->get_recordset_sql('
                 SELECT * from {question_ccode_testcases}');
@@ -131,7 +131,7 @@ function xmldb_qtype_ccode_upgrade($oldversion) {
         // ccode savepoint reached
         upgrade_plugin_savepoint(true, 2012013102, 'qtype', 'ccode');
     }
-    
+
     if ($oldversion < 2012062902) {
         $dbman = $DB->get_manager();
         $table = new xmldb_table('question_ccode_testcases');
@@ -144,7 +144,18 @@ function xmldb_qtype_ccode_upgrade($oldversion) {
         $dbman->drop_field($table, $hiddenField);
         upgrade_plugin_savepoint(true, 2012062902, 'qtype', 'ccode');
     }
- 
+
+        // New version increases stdin and output field sizes to medium text
+    if ($oldversion < 2012073001) {
+        $dbman = $DB->get_manager();
+        $table = new xmldb_table('question_ccode_testcases');
+        $stdin = new xmldb_field('stdin', XMLDB_TYPE_TEXT, 'medium');
+        $output = new xmldb_field('output', XMLDB_TYPE_TEXT, 'medium');
+        $dbman->change_field_precision($table, $stdin);
+        $dbman->change_field_precision($table, $output);
+        upgrade_plugin_savepoint(true, 2012073001, 'qtype', 'ccode');
+    }
+
     return $result;
 }
 ?>
