@@ -101,6 +101,7 @@ class qtype_ccode_question extends qtype_progcode_question {
         $options = new stdClass();
         $options->input = isset($testCase->stdin) ? $testCase->stdin : '';
         $options->output = $testCase->output;
+        $options->memlimit = 32 * 1024 * 1024;  // Allow 64MB
         $test_prog = $this->make_test($studentCode, $testCase->testcode);
         $taskId = onlinejudge_submit_task($cmid, $userid, 'c_warn2err_sandbox',
             array('main.c' => $test_prog),
