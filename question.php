@@ -140,8 +140,21 @@ class qtype_ccode_question extends qtype_progcode_question {
         // Split the result of a run from a set of merged testcases into a
         // set of individual results. Should only be called if the run
         // did not abort from a syntax error, exception etc.
+        // A complication here is that the online judge strips trailing
+        // newlines (in judge_base::diff()), so if the individual testcases
+        // produce no output, the final occurrence of the separator will be
+        // missing its terminating newline. Accordingly, I split with the
+        // raw terminator (sans newline) then strip newlines from the start
+        // of each split testcase (if they exist).
 
-        $outputs = explode($this::SEPARATOR . "\n", $testResult->output);
+
+        $outputs = explode($this::SEPARATOR, $testResult->output);
+        for($i = 1; $i < count($outputs); $i++) {
+            if (strlen($outputs[$i]) && $outputs[$i][0] == "\n") {
+                $outputs[$i] = substr($outputs[$i], 1);
+            }
+        }
+        
         $testResults = array();
         assert(count($testCases) == count($outputs));
         $i = 0;

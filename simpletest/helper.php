@@ -37,7 +37,7 @@ class qtype_ccode_test_helper extends question_test_helper {
     public function get_test_questions() {
         return array('sqr', 'sqrNoSemicolons', 'helloFunc',
             'copyStdin', 'timeout', 'exceptions', 'strToUpper',
-            'strToUpperFullMain');
+            'strToUpperFullMain', 'stringDelete');
     }
 
     /**
@@ -78,7 +78,7 @@ class qtype_ccode_test_helper extends question_test_helper {
         $ccode->unitpenalty = 0.2;
         return $ccode;
     }
-    
+
     /**
      * Makes a ccode question asking for a sqr() function but without
      * semicolons on the ends of all the printf testcases.
@@ -119,7 +119,7 @@ class qtype_ccode_test_helper extends question_test_helper {
         return $ccode;
     }
 
-    
+
     /**
      * Makes a ccode question to write a function that just print 'Hello <name>'
      * This test also tests multiline expressions.
@@ -144,7 +144,7 @@ class qtype_ccode_test_helper extends question_test_helper {
         $ccode->unitpenalty = 0.2;
         return $ccode;
     }
-    
+
     /**
      * Makes a ccode question to write a program that reads n lines of stdin
      * and writes them to stdout.
@@ -182,8 +182,8 @@ class qtype_ccode_test_helper extends question_test_helper {
         $ccode->unitpenalty = 0.2;
         return $ccode;
     }
-    
-    
+
+
     public function make_ccode_question_strToUpper() {
         question_bank::load_question_definition_classes('ccode');
         $ccode = new qtype_ccode_question();
@@ -220,10 +220,10 @@ printf(\"%s\\n\", s);
         $ccode->qtype = question_bank::get_qtype('ccode');
         $ccode->unitgradingtype = 0;
         $ccode->unitpenalty = 0.2;
-        return $ccode;      
+        return $ccode;
     }
-    
-    
+
+
     public function make_ccode_question_strToUpperFullMain() {
         // A variant of strToUpper where test cases include an actual main func
         question_bank::load_question_definition_classes('ccode');
@@ -267,9 +267,45 @@ int main() {
         $ccode->qtype = question_bank::get_qtype('ccode');
         $ccode->unitgradingtype = 0;
         $ccode->unitpenalty = 0.2;
-        return $ccode;      
+        return $ccode;
     }
-    
+
+    /**
+     * Makes a ccode question asking for a stringDelete() function that
+     * deletes from a given string all characters present in another
+     * string
+     * @return qtype_ccode_question
+     */
+    public function make_ccode_question_stringDelete() {
+        question_bank::load_question_definition_classes('ccode');
+        $ccode = new qtype_ccode_question();
+        test_question_maker::initialise_a_question($ccode);
+        $ccode->name = 'Function to delete from a source string all chars present in another string';
+        $ccode->questiontext = 'Write a function void stringDelete(char *s, const char *charsToDelete) that takes any two C strings as parameters and modifies the string s by deleting from it all characters that are present in charsToDelete.';
+        $ccode->generalfeedback = 'No feedback available for ccode questions.';
+        $ccode->testcases = array(
+            (object) array('testcode'       => "char s[] = \"abcdefg\";\nstringDelete(s, \"xcaye\");\nprintf(\"%s\\n\", s);",
+                           'output'         => 'bdfg',
+                           'display'        => 'SHOW',
+                           'hiderestiffail' => 0,
+                           'useasexample'   => 1),
+            (object) array('testcode'       => "char s[] = \"abcdefg\";\nstringDelete(s, \"\");\nprintf(\"%s\\n\", s);",
+                           'output'         => 'abcdefg',
+                           'display'        => 'SHOW',
+                           'hiderestiffail' => 0,
+                           'useasexample'   => 1),
+            (object) array('testcode'       => "char s[] = \"aaaaabbbbb\";\nstringDelete(s, \"x\");\nprintf(\"%s\\n\", s);",
+                           'output'         => 'aaaaabbbbb',
+                           'display'        => 'SHOW',
+                           'hiderestiffail' => 0,
+                           'useasexample'   => 0)
+        );
+        $ccode->qtype = question_bank::get_qtype('ccode');
+        $ccode->unitgradingtype = 0;
+        $ccode->unitpenalty = 0.2;
+        return $ccode;
+    }
+
     /**
      * Makes a ccode question that loops forever, to test sandbox timeout.
      * @return qtype_ccode_question
@@ -291,7 +327,7 @@ int main() {
         $ccode->unitgradingtype = 0;
         $ccode->unitpenalty = 0.2;
         return $ccode;
-    }  
-      
-     */ 
+    }
+
+     */
 }

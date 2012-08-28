@@ -39,19 +39,19 @@ class qtype_ccode_question_test extends UnitTestCase {
         $this->qtype = new qtype_ccode_question();
         $this->goodcode = "int sqr(int n) ( return n * n; }\n";
     }
-    
+
 
     public function tearDown() {
         $this->qtype = null;
     }
-    
-    
+
+
     public function test_get_question_summary() {
         $q = test_question_maker::make_question('ccode', 'sqr');
         $this->assertEqual('Write a function int sqr(int n) that returns n squared.',
                 $q->get_question_summary());
     }
-    
+
 
     public function test_summarise_response() {
         $s = $this->goodcode;
@@ -59,59 +59,59 @@ class qtype_ccode_question_test extends UnitTestCase {
         $this->assertEqual($s,
                $q->summarise_response(array('answer' => $s)));
     }
-    
+
     // Now test sandbox
-    
+
     public function test_supported_langs() {
         $langs = judge_sandbox::get_languages();
         $this->assertTrue(isset($langs['c_sandbox']));
         $this->assertTrue(isset($langs['cpp_sandbox']));
     }
-    
+
     public function test_compile_error() {
-        $taskId = onlinejudge_submit_task(1, 99, 'c_sandbox', 
+        $taskId = onlinejudge_submit_task(1, 99, 'c_sandbox',
                 array('main.c'=>"int main() { return 0; /* No closing brace */"),
                 'questiontype_ccode', array());
         $task = onlinejudge_judge($taskId);
         $this->assertEqual($task->status, ONLINEJUDGE_STATUS_COMPILATION_ERROR);
     }
-    
+
     public function test_good_hello_world() {
-         $taskId = onlinejudge_submit_task(1, 99, 'c_sandbox', 
+         $taskId = onlinejudge_submit_task(1, 99, 'c_sandbox',
                 array('main.c'=>"#include <stdio.h>\nint main() { printf(\"Hello world!\\n\");return 0;}\n"),
                 'questiontype_ccode', array('output' => 'Hello world!'));
         $task = onlinejudge_judge($taskId);
         $this->assertEqual($task->status, ONLINEJUDGE_STATUS_ACCEPTED);
     }
-    
+
     public function test_bad_hello_world() {
-         $taskId = onlinejudge_submit_task(1, 99, 'c_sandbox', 
+         $taskId = onlinejudge_submit_task(1, 99, 'c_sandbox',
                 array('main.c'=>"#include <stdio.h>\nint main() { printf(\"Hello world\\n\");return 0;}\n"),
                 'questiontype_ccode', array('output' => 'Hello world!'));
         $task = onlinejudge_judge($taskId);
         $this->assertEqual($task->status, ONLINEJUDGE_STATUS_WRONG_ANSWER);
         $this->assertEqual($task->stdout, "Hello world");
         $this->assertEqual($task->output, "Hello world!");
-    } 
-    
+    }
+
     public function test_timelimit_exceeded() {
-         $taskId = onlinejudge_submit_task(1, 99, 'c_sandbox', 
+         $taskId = onlinejudge_submit_task(1, 99, 'c_sandbox',
                 array('main.c'=>"int main() { while(1) {} }\n"),
                 'questiontype_ccode', array('output' => 'Hello world!'));
         $task = onlinejudge_judge($taskId);
         $this->assertEqual($task->status, ONLINEJUDGE_STATUS_TIME_LIMIT_EXCEED);
     }
-    
+
     public function test_runtime_error() {
-         $taskId = onlinejudge_submit_task(1, 99, 'c_sandbox', 
+         $taskId = onlinejudge_submit_task(1, 99, 'c_sandbox',
                 array('main.c'=>"int main() { int buff[1]; int *p = buff; while (1) { *p++ = 0; }}\n"),
                 'questiontype_ccode', array('output' => 'Hello world!'));
         $task = onlinejudge_judge($taskId);
         $this->assertEqual($task->status, ONLINEJUDGE_STATUS_RUNTIME_ERROR);
     }
-   
+
     // Now test ccode's judging of questions (via sandbox of course)
-    
+
     public function test_grade_response_right() {
         // Check grading of a "write-a-function" question with multiple
         // test cases and a correct solution
@@ -126,8 +126,72 @@ class qtype_ccode_question_test extends UnitTestCase {
             $this->assertTrue($tr->isCorrect);
         }
     }
-    
-    
+
+
+        public function test_func_one_line_response_good() {
+        // Check grading of a "write-a-function" question with multiple
+        // test cases, where the function is meant to leave a valid
+        // string in the destination buffer.
+        $q = test_question_maker::make_question('ccode', 'stringDelete');
+        $response = array('answer' => <<<EOT
+ void stringDelete(char *s, const char *charsToDelete) {
+    int sLen = strlen(s);
+    int iOut = 0;
+    int iIn = 0;
+    for (iIn = 0; iIn < sLen; iIn++) {
+        char c = s[iIn];
+        if (strchr(charsToDelete, c) == NULL) {
+            s[iOut] = c;
+            iOut++;
+        }
+    }
+    s[iOut] = 0;
+}
+EOT
+        );
+        $result = $q->grade_response($response);
+        $this->assertEqual($result[0], 1); // Mark
+        $this->assertEqual($result[1], question_state::$gradedright);
+        $this->assertTrue(isset($result[2]['_testresults']));
+        $testResults = unserialize($result[2]['_testresults']);
+        foreach ($testResults as $tr) {
+            $this->assertTrue($tr->isCorrect);
+        }
+    }
+
+
+    public function test_func_one_line_response_bad() {
+        // Check grading of a "write-a-function" question with multiple
+        // test cases, where the function is meant to leave a valid
+        // string in the destination buffer. In this case we give it a
+        // bad solution that leaves an empty string, always.
+        $q = test_question_maker::make_question('ccode', 'stringDelete');
+        $response = array('answer' => <<<EOT
+ void stringDelete(char *s, const char *charsToDelete) {
+    int sLen = strlen(s);
+    int iOut = 0;
+    int iIn = 0;
+    for (iIn = 0; iIn < sLen; iIn++) {
+        char c = s[iIn];
+        if (strchr(charsToDelete, c) == NULL) {
+            s[iOut] = c;
+        }
+    }
+    s[iOut] = 0;
+}
+EOT
+        );
+        $result = $q->grade_response($response);
+        $this->assertEqual($result[0], 0); // Mark
+        $this->assertEqual($result[1], question_state::$gradedwrong);
+        $this->assertTrue(isset($result[2]['_testresults']));
+        $testResults = unserialize($result[2]['_testresults']);
+        foreach ($testResults as $tr) {
+            $this->assertFalse($tr->isCorrect);
+        }
+    }
+
+
     public function test_missing_semicolon() {
         // Check that a missing semicolon in a simple printf test is reinsterted
         // Check grading of a "write-a-function" question with multiple
@@ -143,8 +207,8 @@ class qtype_ccode_question_test extends UnitTestCase {
             $this->assertTrue($tr->isCorrect);
         }
     }
-    
-    
+
+
     public function test_grade_response_compile_errors() {
         // Check grading of a "write-a-function" question with multiple
         // test cases and two different bad solutions, one causing a link
@@ -153,8 +217,8 @@ class qtype_ccode_question_test extends UnitTestCase {
         $this->checkCompileErrors('int square(int n) { return n * n; }', 'COMPILE ERROR');
         $this->checkCompileErrors('int sqr(int n) { return n * n }', 'COMPILE ERROR');
     }
-        
-        
+
+
     private function checkCompileErrors($code, $expectedError) {
         $q = test_question_maker::make_question('ccode', 'sqr');
         $response = array('answer' => $code);
@@ -169,8 +233,8 @@ class qtype_ccode_question_test extends UnitTestCase {
         $this->assertFalse($tr->isCorrect);
         $this->assertEqual(substr($tr->output, 0, strlen($expectedError)), $expectedError);
     }
-    
-    
+
+
     public function test_grade_response_wrong_ans() {
         // Check grading of a "write-a-function" question with multiple
         // test cases when the solution is right for some of the tests only.
@@ -187,8 +251,8 @@ class qtype_ccode_question_test extends UnitTestCase {
         $this->assertTrue($testResults[1]->isCorrect);
         $this->assertFalse($testResults[2]->isCorrect);
         $this->assertFalse($testResults[3]->isCorrect);
-    } 
-    
+    }
+
 
     public function test_grade_runtime_error() {
         // Check grading of a "write-a-function" question with multiple
@@ -211,9 +275,9 @@ class qtype_ccode_question_test extends UnitTestCase {
         $this->assertFalse($testResults[3]->isCorrect);
         $this->assertEqual(substr($testResults[3]->output, 0, strlen("RUNTIME ERROR")), "RUNTIME ERROR");
     }
-    
-    
-    
+
+
+
     public function test_copy_stdin_to_stdout() {
         // Test of a question that copies standard in to standard out.
         $q = test_question_maker::make_question('ccode', 'copyStdin');
@@ -238,8 +302,8 @@ int main() {
             $this->assertTrue($tr->isCorrect);
         }
     }
-    
-    
+
+
     public function test_str_to_upper() {
         // Check grading of a function with more complicated test code,
         // requiring #includes to be extracted and test cases to be in
@@ -264,7 +328,7 @@ $code =
             $this->assertTrue($tr->isCorrect);
         }
     }
-    
+
     public function test_str_to_upper_full_main() {
         // This version has a full main function in the test
         $q = test_question_maker::make_question('ccode', 'strToUpperFullMain');
@@ -287,7 +351,7 @@ $code =
             $this->assertTrue($tr->isCorrect);
         }
     }
-    
+
     public function test_illegal_function_call() {
         // Check grading of a "write-a-function" question with multiple
         // test cases when the solution tried to do an illegal function call
@@ -300,7 +364,7 @@ int sqr(int n) {
     if (n == 0) return 0;
     else {
         int i = 0;
-        for (i = 0; i < 20; i++) 
+        for (i = 0; i < 20; i++)
             fork();
         return 0;
     }
@@ -317,9 +381,9 @@ int sqr(int n) {
         $this->assertEqual(substr($testResults[1]->output, 0,
                 strlen("CALL TO A RESTRICTED LIBRARY FUNCTION.")),
                 "CALL TO A RESTRICTED LIBRARY FUNCTION.");
-    } 
-    
-        
+    }
+
+
     private function _good_sqr_code() {
         return "int sqr(int n) { return n * n; }\n";
     }
