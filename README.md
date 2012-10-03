@@ -12,6 +12,10 @@ I used ccode with a class of 200 students learning C programming. Over a 6 week 
 
 Processing of a typical ccode quiz question seems not to take much longer than processing of an ordinary Moodle quiz question (e.g. multichoice). We ran two live invigilated one hour tests with 100 students in each sitting and 6 questions in the test. The server was a quad core, but except at start up when everyone logged in was  never more than about 25% loaded.
 
+
+INSTALLATION
+============
+
 A. Installing the C/C++ sandbox
 -------------------------------
 
@@ -30,8 +34,6 @@ out lines 83 - 85:
 
         sudo yum install php-devel
 
-INSTALLATION
-============
 
 B. Install the pycode plug-in
 -----------------------------
