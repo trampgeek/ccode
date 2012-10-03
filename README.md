@@ -19,7 +19,7 @@ INSTALLATION
 A. Install the C/C++ sandbox
 ----------------------------
 
-ccode uses the sandbox that comes with the Moodle online judge assignment plugin (https://github.com/hit-moodle/moodle-local\_onlinejudge), so this must be installed first. Installation under Ubuntu was straightforward; I just followed the install instructions at https://github.com/hit-moodle/moodle-local\_onlinejudge/blob/master/README.md
+ccode uses the sandbox that comes with the Moodle online judge assignment plugin (https://github.com/hit-moodle/moodle-local_onlinejudge), so this must be installed first. Installation under Ubuntu was straightforward; I just followed the install instructions at https://github.com/hit-moodle/moodle-local_onlinejudge/blob/master/README.md
 
 Under RedHat, however, it proved a bit more problematic:
 
