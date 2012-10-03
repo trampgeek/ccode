@@ -8,9 +8,9 @@ ccode is a Moodle question type that requests students to submit C code to some 
 
 State of the play
 -----------------
-I used ccode with a class of 200 students learning C programming. Over a 6 week period there were around 40 ccode quiz questions attempted by all students, often many times over. So there have been at least 10,000 quiz question submission. Apart from a couple of minor bugs, the system appears to have performed almost faultlessly. I now declare it stable. So it must be time for me to start hacking it again :)
+I used ccode with a class of 200 students learning C programming. Over a 6 week period there were around 40 ccode quiz questions attempted by all students, often many times over. So there have been at least 10,000 quiz question submissions. Apart from a couple of minor bugs, the system appears to have performed almost faultlessly. I now declare it stable. So it must be time for me to start hacking it again :)
 
-Processing of a typical ccode quiz question seems not to take much longer than processing of an ordinary Moodle quiz question (e.g. multichoice). We ran two live invigilated one hour tests with 100 students in each sitting and 6 questions in the test. The server was a quad core, but except at start up when everyone logged in was  never more than about 25% loaded.
+Processing of a typical ccode quiz question seems not to take much longer than processing of an ordinary Moodle quiz question (e.g. multichoice). We ran two live invigilated 1-hour tests with 100 students in each sitting and 6 questions in each test. The works out to about one submission every 5 seconds. The server was a quad core, but except at start up when everyone logged in was never more than about 25% loaded.
 
 
 INSTALLATION
