@@ -1,6 +1,8 @@
 ccode
 =====
 
+IMPORTANT: ccode is now defunct. It has been replaced by CodeRunner (see https://github.com/trampgeek/CodeRunner) which offers far more features and functionality.
+
 @version 26 May 2012
 @author Richard Lobb, University of Canterbury, New Zealand.
 
